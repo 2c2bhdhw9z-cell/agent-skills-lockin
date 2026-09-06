@@ -150,13 +150,27 @@ engineering opinion.
 ### 7. The template question — for scaffolded starters specifically
 
 Scaffolded projects are where lock-in hides best, because it arrives *pre-installed and endorsed*.
-Before building on one, audit it:
+Before building on one, audit it. **Run the bundled detector — it is the primary tool for this skill**;
+it is read-only, package-qualified (so it does not fire on a `badge` in prose or an `amplitude` in a
+physics test), and it fails closed:
 
 ```bash
-# What does it ship that you didn't ask for?
-grep -rniE 'analytics|telemetry|beacon|collector|badge|watermark|@vendor' \
-  --include='*.ts' --include='*.tsx' --include='*.json' . | grep -v node_modules
+# Generic signals (telemetry SDKs, collector endpoints, hash-protection manifests, injected
+# components, generated config, unread env). With a vendor name it also finds enforcement rules,
+# mandated imports, and vendor mentions in lockfiles / build config / CI.
+./vendor-lockin-guard/scripts/detect-lockin.sh . 'vendorname|@vendor'
+```
 
+Exit codes make it usable as a CI gate: `0` = no HIGH findings, `1` = at least one HIGH finding,
+`2` = the audit could not run (bad path, file-as-root, invalid vendor regex, unknown flag). A `2` is
+a hard failure on purpose — a gate must never go green on an audit that never happened. Run
+`detect-lockin.sh --help` for the full usage.
+
+If you cannot run the script, the same three questions in shell (note the *construct*, not the
+vocabulary — match rendered components and package-qualified imports, never the bare word, or you get
+the false positives the detector exists to avoid):
+
+```bash
 # Does it enforce its own presence?
 grep -rn -i 'vendor' *.json .*rc* 2>/dev/null | grep -v node_modules
 
