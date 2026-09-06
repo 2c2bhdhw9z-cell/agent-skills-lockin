@@ -81,9 +81,16 @@ The detector stands alone and changes nothing:
 ./vendor-lockin-guard/scripts/detect-lockin.sh . 'vendorname|@vendor'
 ```
 
-Read-only. Exits non-zero on any HIGH finding, so it works as a CI gate. With no vendor name it still
-finds the generic signals: telemetry endpoints, enforcement rules, hash-protection manifests,
-"do not remove" comments, vendor state directories, generated config and unread env vars.
+Read-only. Exit `0` = no HIGH findings, `1` = at least one HIGH finding (so it works as a CI gate),
+`2` = the audit could not run (a bad path, a file passed as the root, an invalid vendor regex, or an
+unknown flag). The `2` is deliberate: a gate must fail closed rather than go green on an audit that
+never happened. `--help` prints usage. With no vendor name it still finds the generic signals:
+telemetry endpoints, enforcement rules, hash-protection manifests, "do not remove" comments, vendor
+state directories, generated config and unread env vars.
+
+There are tests: `vendor-lockin-guard/tests/run-tests.sh` runs the detector against a fixtures tree
+and asserts the exact HIGH/MEDIUM counts and exit code for a clean tree, each real signal, each known
+false positive, `--help`, and every fail-closed error path.
 
 ---
 
@@ -126,6 +133,11 @@ checked" is useful. Silence that reads as a pass is the one genuinely harmful ou
 ---
 
 ## These are tested, and here is the evidence
+
+There is a fixture-based suite at `vendor-lockin-guard/tests/run-tests.sh`: one fixture per detected
+signal and one per known false positive, asserting the exact HIGH/MEDIUM counts and the exit code for
+a clean tree, the real signals, the false positives, `--help`, and each fail-closed error path. Run it
+with `bash vendor-lockin-guard/tests/run-tests.sh`.
 
 The audit script had **four false-positive bugs**, all found by running it rather than reasoning about
 it. Every one is written into its comments, because the reasoning is the reusable part:
