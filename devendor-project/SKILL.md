@@ -66,6 +66,27 @@ larger job, not the first.
 
 ## Phase 1 — Discovery
 
+**Run the bundled detector first.** The sibling `vendor-lockin-guard` skill ships
+`vendor-lockin-guard/scripts/detect-lockin.sh`, which already implements this whole
+phase and is hardened in ways an ad-hoc grep is not: it fails **closed** (a bad path,
+a file instead of a directory, or an invalid regex exits 2 rather than reporting a
+reassuring "0 findings"), it excludes by **path** rather than by matched text, and it
+matches constructs rather than bare vocabulary.
+
+```bash
+# The whole of Phase 1, with evidence and exit codes you can trust.
+./vendor-lockin-guard/scripts/detect-lockin.sh . 'vendorname'
+#   exit 0  -> no HIGH findings
+#   exit 1  -> HIGH findings present (usable as a CI gate)
+#   exit 2  -> the audit could NOT run; do not read this as "clean"
+```
+
+The greps below are the **fallback** for when that script is unavailable, and for
+widening the net after it has run. Use them knowing what they do not do: matching a
+vendor's name rather than the construct yields both false positives and false
+negatives, and a plain `grep | grep -v` pipeline reports nothing at all when the path
+is wrong — indistinguishable from a clean result.
+
 Cast a wide net. Vendor names appear in places grep-for-source misses.
 
 ```bash
